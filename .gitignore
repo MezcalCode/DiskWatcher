@@ -1,0 +1,56 @@
+# macOS metadata
+.DS_Store
+
+# Local editor and workspace metadata
+.codex/
+*.swp
+*.swo
+*.tmp
+
+# Xcode build products and user data
+build/
+DerivedData/
+*.xcarchive
+*.xcuserstate
+*.xcuserdatad
+*.xcworkspace/xcuserdata/
+*.xccheckout
+*.xcbkptlist
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.pins
+Package.resolved
+
+# Dependency managers
+Pods/
+Podfile.lock
+Carthage/Build/
+
+# Fastlane artifacts
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Environment and secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.p8
+*.mobileprovision
+*.cer
+*.crt
+*.der
+*.jks
+*.keystore
+secrets.*
+credentials.*
+firebase-service-account*.json
+GoogleService-Info.plist
+local.properties
