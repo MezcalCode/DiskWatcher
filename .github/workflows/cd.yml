@@ -39,6 +39,8 @@ jobs:
 
       - name: Read release version from Xcode
         id: version
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           git fetch --tags --force
 
@@ -53,15 +55,23 @@ jobs:
 
           RELEASE_TAG="v${MARKETING_VERSION}"
           TAG_COMMIT="$(git rev-list -n 1 "${RELEASE_TAG}" 2>/dev/null || true)"
-
-          if [ -n "${TAG_COMMIT}" ] && [ "${TAG_COMMIT}" != "${GITHUB_SHA}" ]; then
-            echo "Tag ${RELEASE_TAG} already points at ${TAG_COMMIT}. Bump MARKETING_VERSION in Xcode before releasing a new build."
-            exit 1
-          fi
+          RELEASE_HTTP_CODE="$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}")"
 
           if [ -z "${TAG_COMMIT}" ]; then
             git tag "${RELEASE_TAG}" "${GITHUB_SHA}"
             git push origin "${RELEASE_TAG}"
+          elif [ "${TAG_COMMIT}" != "${GITHUB_SHA}" ]; then
+            if [ "${RELEASE_HTTP_CODE}" = "200" ]; then
+              echo "Tag ${RELEASE_TAG} already has a published GitHub Release. Bump MARKETING_VERSION before releasing a new build."
+              exit 1
+            fi
+
+            echo "Tag ${RELEASE_TAG} points at ${TAG_COMMIT}; moving it to ${GITHUB_SHA} because no GitHub Release exists yet."
+            git tag -f "${RELEASE_TAG}" "${GITHUB_SHA}"
+            git push --force origin "${RELEASE_TAG}"
           fi
 
           echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
