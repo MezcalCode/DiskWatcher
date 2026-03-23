@@ -43,16 +43,11 @@ jobs:
           git fetch --tags --force
 
           MARKETING_VERSION="$(
-            xcodebuild \
-              -project "${PROJECT}" \
-              -scheme "${SCHEME}" \
-              -configuration Release \
-              -showBuildSettings \
-            | awk -F' = ' '/MARKETING_VERSION =/ { print $2; exit }'
+            awk -F' = ' '/^MARKETING_VERSION[[:space:]]*=/{ print $2; exit }' Config/Versioning.xcconfig
           )"
 
           if [ -z "${MARKETING_VERSION}" ]; then
-            echo "Unable to read MARKETING_VERSION from ${PROJECT}."
+            echo "Unable to read MARKETING_VERSION from Config/Versioning.xcconfig."
             exit 1
           fi
 
@@ -71,7 +66,6 @@ jobs:
 
           echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${MARKETING_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "build_number=${CURRENT_PROJECT_VERSION}" >> "$GITHUB_OUTPUT"
           echo "target_sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Build app (unsigned)
