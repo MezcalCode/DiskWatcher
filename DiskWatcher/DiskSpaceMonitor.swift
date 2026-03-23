@@ -112,30 +112,23 @@ final class DiskSpaceMonitor {
     }
 
     private func makeSnapshot() -> DiskSpaceSnapshot? {
-        do {
-            let values = try rootURL.resourceValues(forKeys: [
-                .volumeAvailableCapacityForImportantUsageKey,
-                .volumeAvailableCapacityKey,
-                .volumeTotalCapacityKey
-            ])
+        var stats = statfs()
 
-            let freeBytes = Int64(
-                values.volumeAvailableCapacityForImportantUsage ??
-                Int64(values.volumeAvailableCapacity ?? 0)
-            )
-            let totalBytes = Int64(values.volumeTotalCapacity ?? 0)
-
-            guard totalBytes > 0 else { return nil }
-
-            return DiskSpaceSnapshot(
-                freeBytes: freeBytes,
-                totalBytes: totalBytes,
-                updatedAt: Date()
-            )
-        } catch {
-            NSLog("Unable to read disk capacity: \(error.localizedDescription)")
+        guard statfs(rootURL.path, &stats) == 0 else {
+            NSLog("Unable to read disk capacity: statfs failed for \(rootURL.path)")
             return nil
         }
+
+        let freeBytes = Int64(stats.f_bavail) * Int64(stats.f_bsize)
+        let totalBytes = Int64(stats.f_blocks) * Int64(stats.f_bsize)
+
+        guard totalBytes > 0 else { return nil }
+
+        return DiskSpaceSnapshot(
+            freeBytes: freeBytes,
+            totalBytes: totalBytes,
+            updatedAt: Date()
+        )
     }
 
     private func shouldPublish(snapshot: DiskSpaceSnapshot) -> Bool {
