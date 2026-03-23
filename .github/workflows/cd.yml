@@ -25,11 +25,6 @@ jobs:
       BUILD_PATH: ${{ github.workspace }}/build/Release
       EXPORT_PATH: ${{ github.workspace }}/build/export
       DIST_PATH: ${{ github.workspace }}/dist
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      DEVELOPER_ID_CERTIFICATE_P12: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12 }}
-      DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-      NOTARYTOOL_APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
-      NOTARYTOOL_APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_APPLE_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -42,22 +37,25 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Validate signing secrets
+      - name: Detect signing setup
+        id: signing
         run: |
-          for variable in \
-            APPLE_TEAM_ID \
-            DEVELOPER_ID_CERTIFICATE_P12 \
-            DEVELOPER_ID_CERTIFICATE_PASSWORD \
-            NOTARYTOOL_APPLE_ID \
-            NOTARYTOOL_APPLE_PASSWORD
-          do
-            if [ -z "${!variable}" ]; then
-              echo "Missing required secret: ${variable}"
-              exit 1
-            fi
-          done
+          if [ -n "${{ secrets.APPLE_TEAM_ID }}" ] && \
+             [ -n "${{ secrets.DEVELOPER_ID_CERTIFICATE_P12 }}" ] && \
+             [ -n "${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}" ] && \
+             [ -n "${{ secrets.NOTARYTOOL_APPLE_ID }}" ] && \
+             [ -n "${{ secrets.NOTARYTOOL_APPLE_PASSWORD }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Import Developer ID certificate
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          DEVELOPER_ID_CERTIFICATE_P12: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12 }}
+          DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
         run: |
           CERT_PATH="${RUNNER_TEMP}/developer-id.p12"
           KEYCHAIN_PATH="${RUNNER_TEMP}/build.keychain-db"
@@ -113,6 +111,9 @@ jobs:
           echo "target_sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Archive app
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           mkdir -p "${BUILD_PATH}"
           ARCHIVE_PATH="${BUILD_PATH}/${APP_NAME}.xcarchive"
@@ -133,6 +134,9 @@ jobs:
             ENABLE_HARDENED_RUNTIME=YES
 
       - name: Export signed app
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           mkdir -p "${EXPORT_PATH}"
           EXPORT_OPTIONS_PLIST="${RUNNER_TEMP}/export-options.plist"
@@ -161,6 +165,11 @@ jobs:
             -exportOptionsPlist "${EXPORT_OPTIONS_PLIST}"
 
       - name: Notarize app
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          NOTARYTOOL_APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          NOTARYTOOL_APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_APPLE_PASSWORD }}
         run: |
           APP_PATH="${EXPORT_PATH}/${APP_NAME}.app"
           if [ ! -d "${APP_PATH}" ]; then
@@ -186,6 +195,34 @@ jobs:
           xcrun stapler staple "${APP_PATH}"
           codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
           spctl -a -vv --type exec "${APP_PATH}" || true
+
+      - name: Build unsigned app
+        if: steps.signing.outputs.enabled != 'true'
+        run: |
+          mkdir -p "${BUILD_PATH}"
+          xcodebuild \
+            -project "${PROJECT}" \
+            -scheme "${SCHEME}" \
+            -configuration Release \
+            -sdk macosx \
+            CONFIGURATION_BUILD_DIR="${BUILD_PATH}" \
+            MARKETING_VERSION="${{ steps.version.outputs.version }}" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Prepare unsigned app
+        if: steps.signing.outputs.enabled != 'true'
+        run: |
+          mkdir -p "${EXPORT_PATH}"
+          APP_PATH="${BUILD_PATH}/${APP_NAME}.app"
+          if [ ! -d "${APP_PATH}" ]; then
+            echo "App bundle not found at ${APP_PATH}"
+            exit 1
+          fi
+
+          cp -R "${APP_PATH}" "${EXPORT_PATH}/"
 
       - name: Create release zip
         run: |
