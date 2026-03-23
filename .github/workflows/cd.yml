@@ -1,0 +1,133 @@
+name: Release Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    env:
+      APP_NAME: DiskWatcher
+      SCHEME: DiskWatcher
+      PROJECT: DiskWatcher.xcodeproj
+      BUILD_PATH: ${{ github.workspace }}/build/Release
+      EXPORT_PATH: ${{ github.workspace }}/build/export
+      DIST_PATH: ${{ github.workspace }}/dist
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Verify ffmpeg binary
+        run: |
+          if [ ! -e Binaries/ffmpeg ]; then
+            echo "Missing Binaries/ffmpeg. Add the binary or update the build phase."
+            exit 1
+          fi
+          if [ ! -x Binaries/ffmpeg ]; then
+            echo "Binaries/ffmpeg is not executable. Run: chmod +x Binaries/ffmpeg"
+            exit 1
+          fi
+
+      - name: Read release version from Xcode
+        id: version
+        run: |
+          git fetch --tags --force
+
+          MARKETING_VERSION="$(
+            xcodebuild \
+              -project "${PROJECT}" \
+              -scheme "${SCHEME}" \
+              -configuration Release \
+              -showBuildSettings \
+            | awk -F' = ' '/MARKETING_VERSION =/ { print $2; exit }'
+          )"
+
+          if [ -z "${MARKETING_VERSION}" ]; then
+            echo "Unable to read MARKETING_VERSION from ${PROJECT}."
+            exit 1
+          fi
+
+          RELEASE_TAG="v${MARKETING_VERSION}"
+          TAG_COMMIT="$(git rev-list -n 1 "${RELEASE_TAG}" 2>/dev/null || true)"
+
+          if [ -n "${TAG_COMMIT}" ] && [ "${TAG_COMMIT}" != "${GITHUB_SHA}" ]; then
+            echo "Tag ${RELEASE_TAG} already points at ${TAG_COMMIT}. Bump MARKETING_VERSION in Xcode before releasing a new build."
+            exit 1
+          fi
+
+          if [ -z "${TAG_COMMIT}" ]; then
+            git tag "${RELEASE_TAG}" "${GITHUB_SHA}"
+            git push origin "${RELEASE_TAG}"
+          fi
+
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${MARKETING_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "build_number=${CURRENT_PROJECT_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "target_sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build app (unsigned)
+        run: |
+          mkdir -p "${BUILD_PATH}"
+          xcodebuild \
+            -project "${PROJECT}" \
+            -scheme "${SCHEME}" \
+            -configuration Release \
+            -sdk macosx \
+            CONFIGURATION_BUILD_DIR="${BUILD_PATH}" \
+            MARKETING_VERSION="${{ steps.version.outputs.version }}" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Export app bundle
+        run: |
+          mkdir -p "${EXPORT_PATH}"
+          APP_PATH="${BUILD_PATH}/${APP_NAME}.app"
+          if [ ! -d "${APP_PATH}" ]; then
+            echo "App bundle not found at ${APP_PATH}"
+            exit 1
+          fi
+
+          cp -R "${APP_PATH}" "${EXPORT_PATH}/"
+
+      - name: Create release zip
+        run: |
+          mkdir -p "${DIST_PATH}"
+          ditto -c -k --sequesterRsrc --keepParent \
+            "${EXPORT_PATH}/${APP_NAME}.app" \
+            "${DIST_PATH}/${APP_NAME}.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-macos-${{ steps.version.outputs.release_tag }}
+          path: ${{ env.DIST_PATH }}/${{ env.APP_NAME }}.zip
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.release_tag }}
+          target_commitish: ${{ steps.version.outputs.target_sha }}
+          files: ${{ env.DIST_PATH }}/${{ env.APP_NAME }}.zip
+          generate_release_notes: true

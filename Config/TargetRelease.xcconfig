@@ -1,0 +1,3 @@
+#include "TargetCommon.xcconfig"
+
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym

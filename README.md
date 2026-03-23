@@ -20,3 +20,14 @@ DiskWatcher is a native macOS menu bar app that shows the current free disk spac
 
 - Launch-at-login registration may fail while running directly from a debug build location. This is expected behavior from macOS in some development setups.
 - The project is configured as a status bar app with `LSUIElement` enabled.
+
+## Releases
+
+- Bump `MARKETING_VERSION` in Xcode when you are ready for a new release.
+- Shared build defaults live in `Config/Base.xcconfig`.
+- Version values live in `Config/Versioning.xcconfig`.
+- Target signing and Debug/Release overrides live in `Config/TargetCommon.xcconfig`, `Config/TargetDebug.xcconfig`, and `Config/TargetRelease.xcconfig`.
+- Push the change to `main`.
+- GitHub Actions creates the matching `vX.Y.Z` tag, builds the app, and publishes the GitHub Release from that tag.
+- The build number is assigned automatically from the GitHub run number during CI and release builds.
+- Local Xcode Release builds use the current git commit count as `CFBundleVersion`.
