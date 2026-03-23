@@ -24,6 +24,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func configureApplication() {
         NSApp.setActivationPolicy(.accessory)
         if let button = statusItem.button {
+            let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+            let image = NSImage(
+                systemSymbolName: "internaldrive",
+                accessibilityDescription: "Disk space"
+            )?.withSymbolConfiguration(configuration)
+            image?.isTemplate = true
+
+            button.image = image
+            button.imagePosition = .imageTrailing
             button.title = "Disk --"
         }
     }
