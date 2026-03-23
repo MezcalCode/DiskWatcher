@@ -11,8 +11,14 @@
 build/
 DerivedData/
 *.xcarchive
+*.xcresult
 *.xcuserstate
 *.xcuserdatad
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
 *.xcworkspace/xcuserdata/
 *.xccheckout
 *.xcbkptlist
