@@ -2,6 +2,8 @@
 
 DiskWatcher is a native macOS menu bar app that shows the current free disk space as a percentage plus human-readable storage values.
 
+If you install an unsigned release build on macOS, you may need to remove the quarantine attribute once before first launch. See the release notes below for the exact command.
+
 ## Features
 
 - Shows the current free disk percentage in the macOS menu bar.
@@ -34,3 +36,19 @@ DiskWatcher is a native macOS menu bar app that shows the current free disk spac
 - Local Xcode Release builds use the current git commit count as `CFBundleVersion`.
 - On a Mac that shows the Gatekeeper warning, you can either right-click the app and choose `Open` once, or remove the quarantine attribute with `xattr -dr com.apple.quarantine DiskWatcher.app`.
 - Release signing requires GitHub secrets for `APPLE_TEAM_ID`, `DEVELOPER_ID_CERTIFICATE_P12`, `DEVELOPER_ID_CERTIFICATE_PASSWORD`, `NOTARYTOOL_APPLE_ID`, and `NOTARYTOOL_APPLE_PASSWORD`.
+
+## Local Install Workaround
+
+If you copy the app into the Applications folder, the full path is usually:
+
+```bash
+/Applications/DiskWatcher.app
+```
+
+If macOS shows the “app is damaged and can’t be opened” message, run:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/DiskWatcher.app
+```
+
+After that, open `DiskWatcher.app` again from `/Applications`.
