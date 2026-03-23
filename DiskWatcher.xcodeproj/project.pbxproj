@@ -19,11 +19,11 @@
 		A10000000000000000000012 /* DiskSpaceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskSpaceMonitor.swift; sourceTree = "<group>"; };
 		A10000000000000000000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000000000000000000014 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		A10000000000000000000016 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Base.xcconfig; sourceTree = "<group>"; };
-		A10000000000000000000015 /* Versioning.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Versioning.xcconfig; sourceTree = "<group>"; };
-		A10000000000000000000017 /* TargetCommon.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/TargetCommon.xcconfig; sourceTree = "<group>"; };
-		A10000000000000000000018 /* TargetDebug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/TargetDebug.xcconfig; sourceTree = "<group>"; };
-		A10000000000000000000019 /* TargetRelease.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/TargetRelease.xcconfig; sourceTree = "<group>"; };
+		A10000000000000000000016 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
+		A10000000000000000000015 /* Versioning.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Versioning.xcconfig; sourceTree = "<group>"; };
+		A10000000000000000000017 /* TargetCommon.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetCommon.xcconfig; sourceTree = "<group>"; };
+		A10000000000000000000018 /* TargetDebug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetDebug.xcconfig; sourceTree = "<group>"; };
+		A10000000000000000000019 /* TargetRelease.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetRelease.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
