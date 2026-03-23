@@ -37,17 +37,6 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Verify ffmpeg binary
-        run: |
-          if [ ! -e Binaries/ffmpeg ]; then
-            echo "Missing Binaries/ffmpeg. Add the binary or update the build phase."
-            exit 1
-          fi
-          if [ ! -x Binaries/ffmpeg ]; then
-            echo "Binaries/ffmpeg is not executable. Run: chmod +x Binaries/ffmpeg"
-            exit 1
-          fi
-
       - name: Read release version from Xcode
         id: version
         run: |

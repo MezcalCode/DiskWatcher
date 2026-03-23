@@ -40,17 +40,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-deriveddata-
 
-      - name: Verify ffmpeg binary
-        run: |
-          if [ ! -e Binaries/ffmpeg ]; then
-            echo "Missing Binaries/ffmpeg. Add the binary or update the build phase."
-            exit 1
-          fi
-          if [ ! -x Binaries/ffmpeg ]; then
-            echo "Binaries/ffmpeg is not executable. Run: chmod +x Binaries/ffmpeg"
-            exit 1
-          fi
-
       - name: Build
         run: |
           xcodebuild \
@@ -91,17 +80,6 @@ jobs:
           key: ${{ runner.os }}-deriveddata-${{ hashFiles('**/*.xcodeproj/project.pbxproj', '**/*.xcworkspace/contents.xcworkspacedata', '**/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-deriveddata-
-
-      - name: Verify ffmpeg binary
-        run: |
-          if [ ! -e Binaries/ffmpeg ]; then
-            echo "Missing Binaries/ffmpeg. Add the binary or update the build phase."
-            exit 1
-          fi
-          if [ ! -x Binaries/ffmpeg ]; then
-            echo "Binaries/ffmpeg is not executable. Run: chmod +x Binaries/ffmpeg"
-            exit 1
-          fi
 
       - name: Test
         run: |
