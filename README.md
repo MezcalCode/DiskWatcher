@@ -28,6 +28,7 @@ DiskWatcher is a native macOS menu bar app that shows the current free disk spac
 - Version values live in `Config/Versioning.xcconfig`.
 - Target signing and Debug/Release overrides live in `Config/TargetCommon.xcconfig`, `Config/TargetDebug.xcconfig`, and `Config/TargetRelease.xcconfig`.
 - Push the change to `main`.
-- GitHub Actions creates the matching `vX.Y.Z` tag, builds the app, and publishes the GitHub Release from that tag.
+- GitHub Actions creates the matching `vX.Y.Z` tag, signs the app with a Developer ID certificate, notarizes it, staples the ticket, and publishes the GitHub Release from that tag.
 - The build number is assigned automatically from the GitHub run number during CI and release builds.
 - Local Xcode Release builds use the current git commit count as `CFBundleVersion`.
+- Release signing requires GitHub secrets for `APPLE_TEAM_ID`, `DEVELOPER_ID_CERTIFICATE_P12`, `DEVELOPER_ID_CERTIFICATE_PASSWORD`, `NOTARYTOOL_APPLE_ID`, and `NOTARYTOOL_APPLE_PASSWORD`.
